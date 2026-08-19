@@ -1,8 +1,18 @@
+<div align="center">
+
 # 📚 Personal Notes Generator
 
-> **AI-powered lecture notes from any YouTube video** — transcription → segmentation → structured study notes → educational diagrams → PDF export.
+**Transform any YouTube lecture into structured, exam-ready study notes — powered by AI.**
 
-Built with **FastAPI** + **Gemini 3.1 Flash-Lite** (text) + **Imagen 3** (diagrams) + **Next.js**.
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
+[![Google Gemini](https://img.shields.io/badge/AI-Gemini%203.1%20Flash--Lite-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
+[![Mermaid](https://img.shields.io/badge/Diagrams-Mermaid.js-FF3670?style=for-the-badge&logo=mermaid&logoColor=white)](https://mermaid.js.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+> Paste a YouTube URL → get segmented topic notes, AI-generated Mermaid diagrams, a quick revision summary, exam Q&As, and a one-click PDF — all in seconds.
+
+</div>
 
 ---
 
@@ -11,59 +21,59 @@ Built with **FastAPI** + **Gemini 3.1 Flash-Lite** (text) + **Imagen 3** (diagra
 | Feature | Description |
 |---|---|
 | 🎬 **Auto Transcript** | Fetches captions via `youtube-transcript-api`, falls back to Supadata API |
-| 🧠 **AI Segmentation** | Gemini 3.1 Flash-Lite splits transcript into logical topic sections |
+| 🧠 **AI Segmentation** | Gemini splits transcript into 3–8 logical topic sections |
 | 📝 **Rich Notes** | Per-section: heading, detailed explanation, key takeaways, examples |
-| 🖼️ **Diagram Generation** | Imagen 3 generates a labelled educational diagram per section |
-| ⚡ **Quick Revision** | Gemini synthesises a 200-word cohesive lecture summary |
-| ❓ **Exam Questions** | 6-8 interview/exam Q&As with answer guidelines |
-| 📄 **PDF Export** | One-click styled PDF via xhtml2pdf |
+| 📊 **Mermaid Diagrams** | AI-generated `flowchart`, `mindmap`, or `sequenceDiagram` per section, rendered client-side |
+| ⚡ **Quick Revision** | Gemini synthesises a 200–300-word cohesive lecture summary |
+| ❓ **Exam Questions** | 6–8 interview/exam Q&As with answer guidelines |
+| 📄 **PDF Export** | One-click styled PDF via `xhtml2pdf` |
 | 🔄 **Long Video Support** | Chunked pipeline for videos > 30 minutes |
-| 📊 **Progress Tracking** | Real-time status via polling endpoint |
+| 📡 **Progress Tracking** | Real-time status via polling endpoint |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ```mermaid
 graph TB
-    subgraph Frontend ["🖥️ Frontend (Next.js)"]
+    subgraph FE ["🖥️ Frontend (Next.js)"]
         UI[Dashboard UI]
-        UI --> |YouTube URL| ANALYZE
-        UI --> |Poll status| PROGRESS
-        UI --> |Trigger PDF| PDF
     end
 
-    subgraph Backend ["⚙️ Backend (FastAPI)"]
-        ANALYZE[POST /api/notes/analyze]
-        GENERATE[POST /api/notes/generate-chunk]
-        PROGRESS[GET /api/notes/progress/:key]
-        REDUCE[POST /api/notes/reduce]
-        PDF[POST /api/notes/export-pdf]
+    subgraph API ["⚙️ Backend (FastAPI)"]
+        ANALYZE[POST /analyze]
+        GENERATE[POST /generate]
+        GENCHUNK[POST /generate-chunk]
+        PROGRESS[GET /progress/:key]
+        REDUCE[POST /reduce]
+        EXPORT[POST /export-pdf]
     end
 
-    subgraph Services ["🔧 Services"]
-        TS[transcript_service.py]
-        LLM[llm_service.py]
-        IMG[image_service.py]
+    subgraph SVC ["🔧 Services Layer"]
+        TS[transcript_service]
+        LLM[llm_service]
     end
 
-    subgraph External ["☁️ External APIs"]
+    subgraph EXT ["☁️ External APIs"]
         YT[YouTube Transcript API]
-        SUPA[Supadata API fallback]
-        GEMINI_TEXT[Gemini 3.1 Flash-Lite\nText Generation]
-        IMAGEN[Imagen 3\nDiagram Generation]
+        SUPA[Supadata API]
+        GEMINI[Gemini 3.1 Flash-Lite]
     end
+
+    UI -->|URL + options| ANALYZE
+    UI -->|Poll| PROGRESS
+    UI -->|Trigger export| EXPORT
 
     ANALYZE --> TS
     GENERATE --> TS
     GENERATE --> LLM
-    GENERATE --> IMG
+    GENCHUNK --> TS
+    GENCHUNK --> LLM
     REDUCE --> LLM
 
-    TS --> YT
-    TS --> |fallback| SUPA
-    LLM --> GEMINI_TEXT
-    IMG --> IMAGEN
+    TS -->|Primary| YT
+    TS -->|Fallback| SUPA
+    LLM --> GEMINI
 ```
 
 ---
@@ -76,23 +86,22 @@ sequenceDiagram
     participant API as FastAPI
     participant TS as TranscriptService
     participant LLM as LLM Service (Gemini)
-    participant IMG as Image Service (Imagen 3)
 
     FE->>API: POST /analyze {url}
     API->>TS: extract_video_id + get_transcript
     TS-->>API: List[TranscriptSegment] + duration
     API-->>FE: {video_id, title, duration, chunks}
 
-    FE->>API: POST /generate {video_id, include_images}
+    FE->>API: POST /generate {video_id, include_diagrams}
     API->>LLM: segment_transcript(transcript)
     LLM-->>API: [{title, start_sec, end_sec}, ...]
 
     loop For each section (parallel, semaphore=2)
         API->>LLM: generate_section_notes(text, start_sec)
         LLM-->>API: SectionNotes {heading, explanation, key_points, examples}
-        opt include_images=true
-            API->>IMG: generate_section_image(heading, explanation)
-            IMG-->>API: base64 JPEG
+        opt include_diagrams=true
+            API->>LLM: generate_section_mermaid(heading, explanation, key_points)
+            LLM-->>API: Mermaid diagram code (flowchart / mindmap / sequenceDiagram)
         end
     end
 
@@ -109,18 +118,20 @@ sequenceDiagram
 ## 🔄 Request Flow — Long Video (Chunked)
 
 ```mermaid
-flowchart LR
-    A[YouTube URL\n> 30 min video] --> B[/analyze\nPartitions into chunks]
-    B --> C{For each chunk}
-    C --> D[/generate-chunk\nstart_sec, end_sec]
-    D --> E[Transcript slice]
-    E --> F[Gemini segments\ntopic sections]
-    F --> G[Notes per section\n+ Imagen diagrams]
-    G --> H[Chunk markdown]
-    C --> |all chunks done| I[/reduce\nSectionSummary list]
-    I --> J[Quick Revision\n+ Exam Questions]
-    J --> K[Full Notes\nMarkdown]
-    K --> L[/export-pdf\nPDF download]
+flowchart TD
+    A["YouTube URL (> 30 min)"] --> B["POST /analyze\nPartition into chunks"]
+    B --> C["For each chunk"]
+    C --> D["POST /generate-chunk\n(start_sec, end_sec)"]
+    D --> E["Slice transcript"]
+    E --> F["Gemini: segment topics"]
+    F --> G["Notes + Mermaid diagram\nper section"]
+    G --> H["Chunk markdown ready"]
+    H --> C
+    C --> I["All chunks done"]
+    I --> J["POST /reduce\nSectionSummary list"]
+    J --> K["Quick Revision\n+ Exam Questions"]
+    K --> L["Full Notes Markdown"]
+    L --> M["POST /export-pdf\nPDF download"]
 ```
 
 ---
@@ -132,30 +143,29 @@ personal_notes_gen/
 ├── backend/
 │   ├── app/
 │   │   ├── core/
-│   │   │   └── config.py          # Pydantic settings (env vars)
+│   │   │   └── config.py              # Pydantic settings (env vars)
 │   │   ├── models/
-│   │   │   └── schemas.py         # Request/Response Pydantic models
+│   │   │   └── schemas.py             # Request/Response Pydantic models
 │   │   ├── routers/
-│   │   │   └── notes.py           # All API endpoints
+│   │   │   └── notes.py               # All API endpoints
 │   │   ├── services/
-│   │   │   ├── llm_service.py     # Gemini 3.1 Flash-Lite text generation
-│   │   │   ├── image_service.py   # Imagen 3 diagram generation
+│   │   │   ├── llm_service.py         # Gemini text generation + Mermaid diagrams
 │   │   │   ├── transcript_service.py  # YouTube transcript fetching
-│   │   │   └── notion_service.py  # (optional) Notion export
-│   │   └── main.py                # FastAPI app entry point
-│   ├── .env                       # API keys (never commit)
-│   ├── .env.example               # Template
+│   │   │   └── notion_service.py      # (optional) Notion export
+│   │   └── main.py                    # FastAPI app entry point
+│   ├── .env                           # API keys — never commit!
+│   ├── .env.example                   # Template for new developers
 │   └── requirements.txt
 └── frontend/
     ├── app/
-    │   ├── page.tsx               # Main dashboard
-    │   └── globals.css            # Global styles
+    │   ├── page.tsx                   # Main dashboard
+    │   └── globals.css                # Global styles
     └── package.json
 ```
 
 ---
 
-## ⚙️ Setup
+## ⚙️ Setup & Installation
 
 ### 1. Clone & Backend Setup
 
@@ -166,7 +176,7 @@ cd personal_notes_gen/backend
 # Create virtual environment
 python -m venv venv
 venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS/Linux
+# source venv/bin/activate     # macOS / Linux
 
 pip install -r requirements.txt
 ```
@@ -180,30 +190,27 @@ cp .env.example .env
 ```
 
 ```env
-# Gemini Flash — text generation (notes, segmentation, summaries)
+# Gemini Flash — text generation (notes, segmentation, summaries, Mermaid diagrams)
 GEMINI_API_KEY_FORTEXT=your_gemini_key_for_text
 
-# Imagen 3 — educational diagram generation per section
-GEMINI_API_KEY=your_gemini_key_for_images
-
-# Supadata — fallback transcript fetcher if YouTube captions unavailable
+# Supadata — fallback transcript fetcher if YouTube captions are unavailable
 SUPADATA_API_KEY=your_supadata_key
 
-# App
+# App server
 PORT=8000
 HOST=127.0.0.1
 ```
 
-> Get Gemini keys from: https://aistudio.google.com/app/apikey  
-> Get Supadata key from: https://supadata.ai
+> 🔑 **Get Gemini API key:** https://aistudio.google.com/app/apikey
+> 🔑 **Get Supadata key:** https://supadata.ai
 
 ### 3. Run Backend
 
 ```bash
 cd backend
 uvicorn app.main:app --reload
-# Runs on http://127.0.0.1:8000
-# API docs: http://127.0.0.1:8000/docs
+# API server → http://127.0.0.1:8000
+# Interactive docs → http://127.0.0.1:8000/docs
 ```
 
 ### 4. Run Frontend
@@ -212,7 +219,7 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 npm run dev
-# Runs on http://localhost:3000
+# App → http://localhost:3000
 ```
 
 ---
@@ -220,7 +227,7 @@ npm run dev
 ## 🌐 API Reference
 
 ### `POST /api/notes/analyze`
-Extracts video metadata and partitions long videos into chunks.
+Extracts video metadata and partitions long videos into time-bounded chunks.
 
 ```json
 // Request
@@ -237,36 +244,36 @@ Extracts video metadata and partitions long videos into chunks.
 ```
 
 ### `POST /api/notes/generate`
-Full pipeline for short videos (≤ 30 min).
+Full pipeline for short videos (≤ 30 min). Returns notes + Mermaid diagrams.
 
 ```json
 // Request
-{ "video_id": "abc123", "include_images": true }
+{ "video_id": "abc123", "include_diagrams": true }
 
 // Response
 { "markdown": "# Full Notes...", "sections": [...] }
 ```
 
 ### `POST /api/notes/generate-chunk`
-Chunked pipeline for long videos.
+Chunked pipeline for long videos — processes one time window at a time.
 
 ```json
 // Request
-{ "video_id": "abc123", "start_sec": 0, "end_sec": 1800, "include_images": false }
+{ "video_id": "abc123", "start_sec": 0, "end_sec": 1800, "include_diagrams": true }
 ```
 
 ### `GET /api/notes/progress/{task_key}`
 Poll real-time generation status.
 
 ```json
-{ "task_key": "abc123_0_1800", "status": "Generating notes" }
+{ "task_key": "abc123_0_1800", "status": "Generating notes for section 3..." }
 ```
 
 ### `POST /api/notes/reduce`
 Generates Quick Revision + Exam Questions from compiled section summaries.
 
 ### `POST /api/notes/export-pdf`
-Converts markdown to a styled PDF stream.
+Converts final markdown to a styled, downloadable PDF stream.
 
 ---
 
@@ -275,26 +282,27 @@ Converts markdown to a styled PDF stream.
 | Layer | Technology |
 |---|---|
 | **Backend Framework** | FastAPI + Uvicorn |
-| **Text AI** | Google Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite`) |
-| **Image AI** | Google Imagen 3 (`imagen-3.0-generate-002`) |
-| **Transcription** | youtube-transcript-api + Supadata fallback |
-| **PDF Generation** | xhtml2pdf |
+| **Text & Diagram AI** | Google Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite`) |
+| **Transcription** | `youtube-transcript-api` + Supadata fallback |
+| **Diagram Rendering** | Mermaid.js (client-side, zero-latency) |
+| **PDF Generation** | `xhtml2pdf` |
 | **Retry Logic** | Tenacity (exponential backoff) |
-| **Config** | Pydantic-Settings |
-| **Frontend** | Next.js |
+| **Config Management** | Pydantic-Settings |
+| **Frontend** | Next.js (App Router) |
 
 ---
 
 ## 🔑 Key Design Decisions
 
-- **Gemini over Groq** — Gemini 3.1 Flash-Lite has a larger context window and integrated image generation ecosystem (Imagen 3), enabling a single-provider AI pipeline.
-- **Dual API keys** — Text and image generation use separate keys to allow independent rate-limit management and billing control.
-- **Token budgeting** — Transcripts are sampled/truncated before LLM calls to stay within TPM limits (`MAX_SEGMENT_CHARS=8000`, `MAX_SECTION_CHARS=5000`).
-- **Async-safe Imagen** — Imagen 3 SDK is synchronous; wrapped in `run_in_executor` to avoid blocking the FastAPI event loop.
-- **Chunked pipeline** — Videos > 30 min are partitioned at natural speech gaps (largest inter-segment pause within ±3 min of each chunk boundary).
+- **Mermaid over Imagen** — Switched from Imagen 3 image generation to Mermaid diagram code, which is faster, free of API-key overhead, always on-topic, and renders natively in the browser with zero extra cost.
+- **Single Gemini key** — All AI tasks (segmentation, notes, diagrams, summaries) share one `GEMINI_API_KEY_FORTEXT`, simplifying secret management.
+- **Token budgeting** — Transcripts are sampled/truncated before each LLM call to stay within TPM limits (`MAX_SEGMENT_CHARS=8000`, `MAX_SECTION_CHARS=5000`, `MAX_SUMMARY_CHARS=10000`).
+- **Async-safe concurrency** — Sections are generated in parallel with an `asyncio.Semaphore(2)` to balance throughput against rate limits.
+- **Chunked pipeline** — Videos > 30 min are partitioned at natural speech gaps (largest inter-segment pause within ±3 min of each chunk boundary), enabling progress tracking per chunk.
+- **Resilient transcription** — Primary YouTube captions fall back to Supadata API automatically, covering videos where auto-captions are disabled.
 
 ---
 
 ## 📜 License
 
-MIT
+MIT © 2026
