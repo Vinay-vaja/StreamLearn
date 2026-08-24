@@ -283,7 +283,7 @@ Converts final markdown to a styled, downloadable PDF stream.
 |---|---|
 | **Backend Framework** | FastAPI + Uvicorn |
 | **Text & Diagram AI** | Google Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite`) |
-| **Transcription** | `youtube-transcript-api` + Supadata fallback |
+| **Transcription** | `youtube-transcript-api` |
 | **Diagram Rendering** | Mermaid.js (client-side, zero-latency) |
 | **PDF Generation** | `xhtml2pdf` |
 | **Retry Logic** | Tenacity (exponential backoff) |
