@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📚 Personal Notes Generator
+#  Personal Notes Generator
 
 **Transform any YouTube lecture into structured, exam-ready study notes — powered by AI.**
 
@@ -20,19 +20,19 @@
 
 | Feature | Description |
 |---|---|
-| 🎬 **Auto Transcript** | Fetches captions via `youtube-transcript-api`, falls back to Supadata API |
-| 🧠 **AI Segmentation** | Gemini splits transcript into 3–8 logical topic sections |
-| 📝 **Rich Notes** | Per-section: heading, detailed explanation, key takeaways, examples |
-| 📊 **Mermaid Diagrams** | AI-generated `flowchart`, `mindmap`, or `sequenceDiagram` per section, rendered client-side |
-| ⚡ **Quick Revision** | Gemini synthesises a 200–300-word cohesive lecture summary |
-| ❓ **Exam Questions** | 6–8 interview/exam Q&As with answer guidelines |
-| 📄 **PDF Export** | One-click styled PDF via `xhtml2pdf` |
-| 🔄 **Long Video Support** | Chunked pipeline for videos > 30 minutes |
-| 📡 **Progress Tracking** | Real-time status via polling endpoint |
+|  **Auto Transcript** | Fetches captions via `youtube-transcript-api`, falls back to Supadata API |
+|  **AI Segmentation** | Gemini splits transcript into 3–8 logical topic sections |
+|  **Rich Notes** | Per-section: heading, detailed explanation, key takeaways, examples |
+|  **Mermaid Diagrams** | AI-generated `flowchart`, `mindmap`, or `sequenceDiagram` per section, rendered client-side |
+|  **Quick Revision** | Gemini synthesises a 200–300-word cohesive lecture summary |
+|  **Exam Questions** | 6–8 interview/exam Q&As with answer guidelines |
+|  **PDF Export** | One-click styled PDF via `xhtml2pdf` |
+|  **Long Video Support** | Chunked pipeline for videos > 30 minutes |
+|  **Progress Tracking** | Real-time status via polling endpoint |
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TB
@@ -78,7 +78,7 @@ graph TB
 
 ---
 
-## 🔄 Request Flow — Short Video
+##  Request Flow — Short Video
 
 ```mermaid
 sequenceDiagram
@@ -115,7 +115,7 @@ sequenceDiagram
 
 ---
 
-## 🔄 Request Flow — Long Video (Chunked)
+##  Request Flow — Long Video (Chunked)
 
 ```mermaid
 flowchart TD
@@ -201,8 +201,8 @@ PORT=8000
 HOST=127.0.0.1
 ```
 
-> 🔑 **Get Gemini API key:** https://aistudio.google.com/app/apikey
-> 🔑 **Get Supadata key:** https://supadata.ai
+>  **Get Gemini API key:** https://aistudio.google.com/app/apikey
+>  **Get Supadata key:** https://supadata.ai
 
 ### 3. Run Backend
 
