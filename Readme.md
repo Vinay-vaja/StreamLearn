@@ -6,8 +6,7 @@
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
-[![Google Gemini](https://img.shields.io/badge/AI-Gemini%203.1%20Flash--Lite-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
-[![Mermaid](https://img.shields.io/badge/Diagrams-Mermaid.js-FF3670?style=for-the-badge&logo=mermaid&logoColor=white)](https://mermaid.js.org)
+
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 > Paste a YouTube URL → get segmented topic notes, AI-generated Mermaid diagrams, a quick revision summary, exam Q&As, and a one-click PDF — all in seconds.
